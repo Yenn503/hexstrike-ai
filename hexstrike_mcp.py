@@ -2471,7 +2471,7 @@ def setup_mcp_server(hexstrike_client: HexStrikeClient) -> FastMCP:
 
     # ---------------- Additional HTTP Framework Tools (sync with server) ----------------
 
-
+    return mcp
 
 
 
