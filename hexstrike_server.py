@@ -22,37 +22,13 @@ import argparse
 import json
 import logging
 import os
-import subprocess
 import sys
-import traceback
 import threading
 import time
-import hashlib
-import pickle
-import base64
-import queue
-from concurrent.futures import ThreadPoolExecutor
-from datetime import datetime, timedelta
-from typing import Dict, Any, Optional
-from collections import OrderedDict
-import shutil
-import venv
-import zipfile
-from pathlib import Path
-from flask import Flask, request, jsonify
-import psutil
-import signal
-import requests
 import re
-import socket
-import urllib.parse
-from dataclasses import dataclass, field
-from enum import Enum
-from typing import List, Set, Tuple
-import asyncio
-import aiohttp
-from urllib.parse import urljoin, urlparse, parse_qs
-from bs4 import BeautifulSoup
+from datetime import datetime
+from typing import Dict, Any, Optional
+from flask import Flask, request, jsonify
 
 # Optional imports for advanced web testing features
 try:
@@ -119,17 +95,11 @@ from core.telemetry import TelemetryCollector
 
 # Phase 5C Batch 1: Core System Classes
 from core.degradation import GracefulDegradation
-from core.process_pool import ProcessPool
 from core.enhanced_process import EnhancedProcessManager
-from core.command_executor import EnhancedCommandExecutor
 from core.file_manager import FileOperationsManager
-from core.file_upload_testing import FileUploadTestingFramework
 
 # Phase 5C Batch 3: Workflow & Support Classes
 from core.process_manager import ProcessManager
-from core.advanced_cache import AdvancedCache
-from core.resource_monitor import ResourceMonitor
-from core.performance import PerformanceDashboard
 from core.python_env_manager import PythonEnvironmentManager
 from core.logging_formatter import ColoredFormatter
 from core.http_testing_framework import HTTPTestingFramework
@@ -138,23 +108,18 @@ from core.http_testing_framework import HTTPTestingFramework
 from agents.bugbounty import BugBountyWorkflowManager, BugBountyTarget
 from agents.ctf import CTFWorkflowManager, CTFChallenge, CTFToolManager
 from agents.cve import CVEIntelligenceManager
-from agents.decision_engine import IntelligentDecisionEngine, TargetProfile, AttackChain
+from agents.decision_engine import IntelligentDecisionEngine
 from agents.ai_payload_generator import AIPayloadGenerator, ai_payload_generator
 from agents.browser_agent import BrowserAgent
 
 # Phase 5C Batch 2: Exploit Generation System
 from agents.cve.exploit_ai import AIExploitGenerator
-from agents.cve.exploits import (
-    SQLiExploit, XSSExploit, FileReadExploit, RCEExploit,
-    XXEExploit, DeserializationExploit, AuthBypassExploit,
-    BufferOverflowExploit, GenericExploit
-)
 
 # Phase 5C Batch 3: CTF Agent Classes
 from agents.ctf.automator import CTFChallengeAutomator
 from agents.ctf.coordinator import CTFTeamCoordinator
 from agents.cve.correlator import VulnerabilityCorrelator
-from core.error_handler import IntelligentErrorHandler, ErrorType, RecoveryAction
+from core.error_handler import IntelligentErrorHandler
 
 # Phase 5C Batch 4: Command Execution & Tool Factory
 from core.execution import (
@@ -163,37 +128,10 @@ from core.execution import (
 )
 from core.tool_factory import create_tool_executor
 
-# Phase 2: Tool Abstraction Layer
+# Phase 2: Tool Abstraction Layer (only tools used in tool_executors)
 from tools.network.nmap import NmapTool
-from tools.network.httpx import HttpxTool
-from tools.network.masscan import MasscanTool
-from tools.network.dnsenum import DNSEnumTool
-from tools.network.fierce import FierceTool
-from tools.network.dnsx import DNSxTool
 from tools.web.nuclei import NucleiTool
 from tools.web.gobuster import GobusterTool
-from tools.web.sqlmap import SQLMapTool
-from tools.web.nikto import NiktoTool
-from tools.web.feroxbuster import FeroxbusterTool
-from tools.web.ffuf import FfufTool
-from tools.web.katana import KatanaTool
-from tools.web.wpscan import WpscanTool
-from tools.web.arjun import ArjunTool
-from tools.web.dalfox import DalfoxTool
-from tools.web.whatweb import WhatwebTool
-from tools.web.dirsearch import DirsearchTool
-from tools.web.paramspider import ParamSpiderTool
-from tools.web.x8 import X8Tool
-from tools.recon.amass import AmassTool
-from tools.recon.subfinder import SubfinderTool
-from tools.recon.waybackurls import WaybackURLsTool
-from tools.recon.gau import GAUTool
-from tools.recon.hakrawler import HakrawlerTool
-from tools.security.testssl import TestSSLTool
-from tools.security.sslscan import SSLScanTool
-from tools.security.jaeles import JaelesTool
-from tools.security.zap import ZAPTool
-from tools.security.burpsuite import BurpSuiteTool
 
 
 # ============================================================================
@@ -271,10 +209,6 @@ browser_agent = BrowserAgent()
 # PROCESS MANAGEMENT FOR COMMAND TERMINATION (v5.0 ENHANCEMENT)
 # ============================================================================
 
-# Process management for command termination
-active_processes = {}  # pid -> process info
-process_lock = threading.Lock()
-
 
 
 # Global environment manager
@@ -288,27 +222,6 @@ env_manager = PythonEnvironmentManager()
 # CVE INTELLIGENCE AND VULNERABILITY MANAGEMENT
 # ============================================================================
 # NOTE: CVEIntelligenceManager moved to agents/cve/intelligence_manager.py
-
-
-# Enhanced logging setup
-def setup_logging():
-    """Setup enhanced logging with colors and formatting"""
-    logger = logging.getLogger()
-    logger.setLevel(logging.INFO)
-
-    # Clear existing handlers
-    for handler in logger.handlers[:]:
-        logger.removeHandler(handler)
-
-    # Console handler with colors
-    console_handler = logging.StreamHandler(sys.stdout)
-    console_handler.setFormatter(ColoredFormatter(
-        "[🔥 HexStrike AI] %(asctime)s [%(levelname)s] %(message)s",
-        datefmt="%Y-%m-%d %H:%M:%S"
-    ))
-    logger.addHandler(console_handler)
-
-    return logger
 
 # Configuration (using existing API_PORT from top of file)
 DEBUG_MODE = os.environ.get("DEBUG_MODE", "0").lower() in ("1", "true", "yes", "y")
