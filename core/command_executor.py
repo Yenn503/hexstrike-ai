@@ -21,64 +21,6 @@ logger = logging.getLogger(__name__)
 COMMAND_TIMEOUT = 300
 
 
-class ProcessManager:
-    """Enhanced process manager for command termination and monitoring"""
-
-    # Process tracking
-    _active_processes = {}
-    _process_lock = threading.Lock()
-
-    @classmethod
-    def register_process(cls, pid: int, command: str, process_obj):
-        """Register a new active process"""
-        with cls._process_lock:
-            cls._active_processes[pid] = {
-                "pid": pid,
-                "command": command,
-                "process": process_obj,
-                "start_time": time.time(),
-                "status": "running",
-                "progress": 0.0,
-                "last_output": "",
-                "bytes_processed": 0
-            }
-            logger.info(f"🆔 REGISTERED: Process {pid} - {command[:50]}...")
-
-    @classmethod
-    def update_process_progress(cls, pid: int, progress: float, last_output: str = "", bytes_processed: int = 0):
-        """Update process progress and stats"""
-        with cls._process_lock:
-            if pid in cls._active_processes:
-                cls._active_processes[pid]["progress"] = progress
-                cls._active_processes[pid]["last_output"] = last_output
-                cls._active_processes[pid]["bytes_processed"] = bytes_processed
-                runtime = time.time() - cls._active_processes[pid]["start_time"]
-
-                # Calculate ETA if progress > 0
-                eta = 0
-                if progress > 0:
-                    eta = (runtime / progress) * (1.0 - progress)
-
-                cls._active_processes[pid]["runtime"] = runtime
-                cls._active_processes[pid]["eta"] = eta
-
-    @classmethod
-    def cleanup_process(cls, pid: int):
-        """Remove process from active registry"""
-        with cls._process_lock:
-            if pid in cls._active_processes:
-                process_info = cls._active_processes.pop(pid)
-                logger.info(f"🧹 CLEANUP: Process {pid} removed from registry")
-                return process_info
-            return None
-
-    @classmethod
-    def get_process_status(cls, pid: int):
-        """Get status of a specific process"""
-        with cls._process_lock:
-            return cls._active_processes.get(pid, None)
-
-
 class EnhancedCommandExecutor:
     """Enhanced command executor with caching, progress tracking, and better output handling"""
 
